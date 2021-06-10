@@ -1,15 +1,10 @@
 #!/usr/bin/env python
 
 import rospy
-from duckiepond_vehicle.msg import UsvDrive
-from sensor_msgs.msg import NavSatFix, Imu
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from RVO import RVO_update, reach, compute_V_des, reach
-from PID import PID_control
-from dynamic_reconfigure.server import Server
-from control.cfg import ang_PIDConfig, dis_PIDConfig
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState, GetModelState
 import math

@@ -1,17 +1,13 @@
 #!/usr/bin/env python
 
 import rospy
-from geometry_msgs.msg import Twist
-from sensor_msgs.msg import NavSatFix, Imu
 from nav_msgs.msg import Odometry
 from RVO import RVO_update, reach, compute_V_des, reach
 from PID import PID_control
 from dynamic_reconfigure.server import Server
-from control.cfg import ang_PIDConfig, dis_PIDConfig
-from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
 import math
-import pandas as pd
+import csv
 import pickle as pkl
 import numpy as np
 import os
@@ -37,16 +33,16 @@ class BoatHRVO(object):
         rospy.loginfo("[%s] Initializing" % self.node_name)
 
         # initiallize PID
-        self.dis_pid = PID_control("distance_control")
-        self.angu_pid = PID_control("angular_control")
-        self.dis_server = Server(
-            dis_PIDConfig, self.cb_dis_pid, "distance_control")
-        self.ang_server = Server(
-            ang_PIDConfig, self.cb_ang_pid, "angular_control")
-        self.dis_pid.setSampleTime(0.1)
-        self.angu_pid.setSampleTime(0.1)
-        self.dis_pid.SetPoint = 0
-        self.angu_pid.SetPoint = 0
+        # self.dis_pid = PID_control("distance_control")
+        # self.angu_pid = PID_control("angular_control")
+        # self.dis_server = Server(
+        #     dis_PIDConfig, self.cb_dis_pid, "distance_control")
+        # self.ang_server = Server(
+        #     ang_PIDConfig, self.cb_ang_pid, "angular_control")
+        # self.dis_pid.setSampleTime(0.1)
+        # self.angu_pid.setSampleTime(0.1)
+        # self.dis_pid.SetPoint = 0
+        # self.angu_pid.SetPoint = 0
 
         # setup publisher
         # self.pub_v1 = rospy.Publisher("cmd_vel", Twist, queue_size=1)
@@ -63,11 +59,16 @@ class BoatHRVO(object):
         self.ws_model['robot_radius'] = 1
 
         print os.path.dirname(__file__)
-        data = pd.read_csv(
-            "/home/developer/vrx/catkin_ws/src/vrx/vrx_gazebo/worlds/block_position.csv")
         objs = []
-        for idx, item in data.iterrows():
-            objs.append([item['x'], item['y'], objs_dict[item['object']]])
+
+        with open('/home/argsubt/catkin_ws/src/maritime_ws/vrx/vrx_gazebo/worlds/block_position.csv') as csvfile:
+            data = csv.reader(csvfile, delimiter=',')
+
+            for i, (obj, x, y) in enumerate(data):
+                if i == 0:
+                    continue
+                objs.append([float(x), float(y), objs_dict[obj]])
+
         self.ws_model['circular_obstacles'] = objs
 
         # rectangular boundary, format [x,y,width/2,heigth/2]
