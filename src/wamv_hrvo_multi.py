@@ -20,6 +20,7 @@ class BoatHRVO(object):
         self.node_name = rospy.get_name()
         rospy.loginfo("[%s] Initializing" % self.node_name)
         self.frame = "odom"
+        self.frame1 = "odom1"
         self.auto = 0
 
         self.reset_world = rospy.ServiceProxy('/gazebo/reset_world', Empty)
@@ -46,7 +47,7 @@ class BoatHRVO(object):
         # initiallize HRVO environment
         self.ws_model = dict()
         # robot radius
-        self.ws_model['robot_radius'] = 4
+        self.ws_model['robot_radius'] = 3
         self.ws_model['circular_obstacles'] = []
         # rectangular boundary, format [x,y,width/2,heigth/2]
         self.ws_model['boundary'] = []
@@ -151,7 +152,7 @@ class BoatHRVO(object):
         self.goal[0] = [msg.pose.position.x, msg.pose.position.y]
 
     def cb_goal1(self, msg):
-        if msg.header.frame_id != self.frame:
+        if msg.header.frame_id != self.frame1:
             self.goal = None
             return
         self.goal[1] = [msg.pose.position.x, msg.pose.position.y]
