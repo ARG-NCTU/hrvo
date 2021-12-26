@@ -20,7 +20,7 @@ class BoatHRVO(object):
         self.node_name = rospy.get_name()
         rospy.loginfo("[%s] Initializing" % self.node_name)
         self.frame = "odom"
-        self.frame1 = "odom1"
+        self.frame1 = "odom"
         self.auto = 0
 
         self.reset_world = rospy.ServiceProxy('/gazebo/reset_world', Empty)
@@ -28,22 +28,32 @@ class BoatHRVO(object):
             '/gazebo/set_model_state', SetModelState)
 
         # setup publisher
-        self.pub_v1 = rospy.Publisher("/wamv/cmd_vel", Twist, queue_size=1)
-        self.sub_p3d1 = rospy.Subscriber(
-            "/wamv/localization_gps_imu/odometry", Odometry, self.cb_boat1_odom, queue_size=1)
-
-        self.pub_v2 = rospy.Publisher("/wamv1/cmd_vel", Twist, queue_size=1)
-        self.sub_p3d2 = rospy.Subscriber(
-            "/wamv1/localization_gps_imu/odometry", Odometry, self.cb_boat2_odom, queue_size=1)
-
+        self.pub_v = rospy.Publisher("/wamv/cmd_vel", Twist, queue_size=1)
+        self.sub_p3d = rospy.Subscriber(
+            "/wamv/localization_gps_imu/odometry", Odometry, self.cb_boat_odom, queue_size=1)
         self.sub_goal = rospy.Subscriber("/wamv/move_base_simple/goal", PoseStamped, self.cb_goal, queue_size=1)
-        self.sub_goal1 = rospy.Subscriber("/wamv1/move_base_simple/goal", PoseStamped, self.cb_goal1, queue_size=1)
 
+        self.pub_v1 = rospy.Publisher("/wamv1/cmd_vel", Twist, queue_size=1)
+        self.sub_p3d1 = rospy.Subscriber(
+            "/wamv1/localization_gps_imu/odometry", Odometry, self.cb_boat1_odom, queue_size=1)
+        self.sub_goal1 = rospy.Subscriber("/wamv1/move_base_simple/goal", PoseStamped, self.cb_goal1, queue_size=1)
+        
+        
+        self.pub_v2 = rospy.Publisher("/wamv2/cmd_vel", Twist, queue_size=1)
+        self.sub_p3d2 = rospy.Subscriber(
+            "/wamv2/localization_gps_imu/odometry", Odometry, self.cb_boat2_odom, queue_size=1)
+        self.sub_goal2 = rospy.Subscriber("/wamv2/move_base_simple/goal", PoseStamped, self.cb_goal2, queue_size=1)
+
+        self.pub_v3 = rospy.Publisher("/wamv3/cmd_vel", Twist, queue_size=1)
+        self.sub_p3d3 = rospy.Subscriber(
+            "/wamv3/localization_gps_imu/odometry", Odometry, self.cb_boat3_odom, queue_size=1)
+        self.sub_goal3 = rospy.Subscriber("/wamv3/move_base_simple/goal", PoseStamped, self.cb_goal3, queue_size=1)
+        
         self.sub_joy = rospy.Subscriber("/wamv/joy", Joy, self.cb_joy, queue_size=1)
         # initiallize boat status
-        self.boat_odom = [Odometry() for i in range(2)]
-        self.cmd_drive = [Twist() for i in range(2)]
-        self.yaw = [0 for i in range(2)]
+        self.boat_odom = [Odometry() for i in range(4)]
+        self.cmd_drive = [Twist() for i in range(4)]
+        self.yaw = [0 for i in range(4)]
         # initiallize HRVO environment
         self.ws_model = dict()
         # robot radius
@@ -53,12 +63,12 @@ class BoatHRVO(object):
         self.ws_model['boundary'] = []
 
         self.position = []
-        self.goal = [[0, 0] for i in range(2)]
+        self.goal = [[0, 0] for i in range(4)]
         # print(self.position)
         # print(self.goal)
-        self.velocity = [[0, 0] for i in range(2)]
-        self.velocity_detect = [[0, 0] for i in range(2)]
-        self.v_max = [1 for i in range(2)]
+        self.velocity = [[0, 0] for i in range(4)]
+        self.velocity_detect = [[0, 0] for i in range(4)]
+        self.v_max = [1 for i in range(4)]
 
         # timer
         self.timer = rospy.Timer(rospy.Duration(0.1), self.cb_hrvo)
@@ -73,17 +83,22 @@ class BoatHRVO(object):
         self.velocity = RVO_update(
             self.position, v_des, self.velocity_detect, self.ws_model)
 
-        for i in range(2):
+        for i in range(4):
             dis, angle = self.process_ang_dis(
                 self.velocity[i][0], self.velocity[i][1], self.yaw[i])
             ##p3d 0.35 0.8
             cmd = Twist()
             cmd.linear.x = dis * 0.35
             cmd.angular.z = angle * 0.95
+            if i ==3:
+                cmd.linear.x = dis * 0.525
+                cmd.angular.z = angle * 1.425
             self.cmd_drive[i] = cmd
 
-        self.pub_v1.publish(self.cmd_drive[0])
-        self.pub_v2.publish(self.cmd_drive[1])
+        self.pub_v.publish(self.cmd_drive[0])
+        self.pub_v1.publish(self.cmd_drive[1])
+        self.pub_v2.publish(self.cmd_drive[2])
+        self.pub_v3.publish(self.cmd_drive[3])
 
     def check_state(self):
         min_dis = 1e9
@@ -128,7 +143,7 @@ class BoatHRVO(object):
 
     def update_all(self):
         self.position = []
-        for i in range(2):
+        for i in range(4):
             # update position
             pos = [self.boat_odom[i].pose.pose.position.x,
                    self.boat_odom[i].pose.pose.position.y]
@@ -147,15 +162,27 @@ class BoatHRVO(object):
                                        self.boat_odom[i].twist.twist.linear.y]
     def cb_goal(self, msg):
         if msg.header.frame_id != self.frame:
-            self.goal = None
+            self.goal[0] = None
             return
         self.goal[0] = [msg.pose.position.x, msg.pose.position.y]
 
     def cb_goal1(self, msg):
-        if msg.header.frame_id != self.frame1:
-            self.goal = None
+        if msg.header.frame_id != self.frame:
+            self.goal[1] = None
             return
         self.goal[1] = [msg.pose.position.x, msg.pose.position.y]
+
+    def cb_goal2(self, msg):
+        if msg.header.frame_id != self.frame:
+            self.goal[2] = None
+            return
+        self.goal[2] = [msg.pose.position.x, msg.pose.position.y]
+
+    def cb_goal3(self, msg):
+        if msg.header.frame_id != self.frame:
+            self.goal[3] = None
+            return
+        self.goal[3] = [msg.pose.position.x, msg.pose.position.y]
     
     def cb_joy(self, msg):
         start_button = 7
@@ -168,12 +195,17 @@ class BoatHRVO(object):
             self.auto = 0
             rospy.loginfo('go manual')
     
-    def cb_boat1_odom(self, msg):
+    def cb_boat_odom(self, msg):
         self.boat_odom[0] = msg
 
-    def cb_boat2_odom(self, msg):
+    def cb_boat1_odom(self, msg):
         self.boat_odom[1] = msg
 
+    def cb_boat2_odom(self, msg):
+        self.boat_odom[2] = msg
+
+    def cb_boat3_odom(self, msg):
+        self.boat_odom[3] = msg
 
 
 if __name__ == "__main__":
