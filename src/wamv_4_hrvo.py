@@ -49,7 +49,7 @@ class BoatHRVO(object):
             "/wamv3/localization_gps_imu/odometry", Odometry, self.cb_boat3_odom, queue_size=1)
         self.sub_goal3 = rospy.Subscriber("/wamv3/move_base_simple/goal", PoseStamped, self.cb_goal3, queue_size=1)
         
-        self.sub_joy = rospy.Subscriber("/wamv/joy", Joy, self.cb_joy, queue_size=1)
+        self.sub_joy = rospy.Subscriber("/joy", Joy, self.cb_joy, queue_size=1)
         # initiallize boat status
         self.boat_odom = [Odometry() for i in range(4)]
         self.cmd_drive = [Twist() for i in range(4)]
