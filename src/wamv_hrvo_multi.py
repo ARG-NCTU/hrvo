@@ -20,7 +20,7 @@ class BoatHRVO(object):
         self.node_name = rospy.get_name()
         rospy.loginfo("[%s] Initializing" % self.node_name)
         self.frame = "odom"
-        self.frame1 = "odom1"
+        self.frame1 = "odom"
         self.auto = 0
 
         self.reset_world = rospy.ServiceProxy('/gazebo/reset_world', Empty)
@@ -30,11 +30,11 @@ class BoatHRVO(object):
         # setup publisher
         self.pub_v1 = rospy.Publisher("/wamv/cmd_vel", Twist, queue_size=1)
         self.sub_p3d1 = rospy.Subscriber(
-            "/wamv/localization_gps_imu/odometry", Odometry, self.cb_boat1_odom, queue_size=1)
+            "/boat1/robot_pose", Odometry, self.cb_boat1_odom, queue_size=1)
 
         self.pub_v2 = rospy.Publisher("/wamv1/cmd_vel", Twist, queue_size=1)
         self.sub_p3d2 = rospy.Subscriber(
-            "/wamv1/localization_gps_imu/odometry", Odometry, self.cb_boat2_odom, queue_size=1)
+            "/boat2/robot_pose", Odometry, self.cb_boat2_odom, queue_size=1)
 
         self.sub_goal = rospy.Subscriber("/wamv/move_base_simple/goal", PoseStamped, self.cb_goal, queue_size=1)
         self.sub_goal1 = rospy.Subscriber("/wamv1/move_base_simple/goal", PoseStamped, self.cb_goal1, queue_size=1)
