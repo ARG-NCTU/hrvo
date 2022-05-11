@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import rospy
 from std_srvs.srv import Empty
@@ -74,7 +74,7 @@ class BoatHRVO(object):
         # initiallize HRVO environment
         self.ws_model = dict()
         # robot radius
-        self.ws_model['robot_radius'] = 4
+        self.ws_model['robot_radius'] = 5
         self.ws_model['circular_obstacles'] = []
         # rectangular boundary, format [x,y,width/2,heigth/2]
         self.ws_model['boundary'] = []
