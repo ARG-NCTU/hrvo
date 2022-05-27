@@ -76,6 +76,26 @@ class BoatHRVO(object):
         # robot radius
         self.ws_model['robot_radius'] = 5
         self.ws_model['circular_obstacles'] = []
+        self.right_start = (6.5,-170)
+        self.right_end = (9.3,-107)
+        self.left_start = (5.7,-192)
+        self.left_end = (5,-249)
+        self.radius = 5
+        self.right_point = abs(self.right_start[1]-self.right_end[1])/self.radius
+        self.right_x = abs(self.right_start[0]-self.right_end[0])/self.right_point 
+        for point in range(self.right_point+1):
+            #print(point)
+            self.ws_model['circular_obstacles'].append((self.right_start[0]+(self.right_x*point),self.right_start[1]+(self.radius*point),self.radius))
+
+        self.left_point = abs(self.left_start[1]-self.left_end[1])/self.radius
+        self.left_x = abs(self.left_start[0]-self.left_end[0])/self.left_point 
+        for point in range(self.left_point+1):
+            #print(point)
+            self.ws_model['circular_obstacles'].append((self.left_start[0]-(self.left_x*point),self.left_start[1]-(self.radius*point),self.radius))
+
+        print(self.ws_model['circular_obstacles'])
+        #print(self.right_start[1])#-170
+        #hole = [x, y, rad]
         # rectangular boundary, format [x,y,width/2,heigth/2]
         self.ws_model['boundary'] = []
 
