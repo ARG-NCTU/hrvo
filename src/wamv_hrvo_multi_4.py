@@ -74,13 +74,13 @@ class BoatHRVO(object):
         # initiallize HRVO environment
         self.ws_model = dict()
         # robot radius
-        self.ws_model['robot_radius'] = 5
+        self.ws_model['robot_radius'] = 1.5
         self.ws_model['circular_obstacles'] = []
         self.right_start = (6.5,-170)
         self.right_end = (9.3,-107)
         self.left_start = (5.7,-192)
         self.left_end = (5,-249)
-        self.radius = 5
+        self.radius = 2
         self.right_point = abs(self.right_start[1]-self.right_end[1])/self.radius
         self.right_x = abs(self.right_start[0]-self.right_end[0])/self.right_point 
         for point in range(self.right_point+1):
@@ -126,13 +126,13 @@ class BoatHRVO(object):
             ##p3d 0.35 0.8
             cmd = Twist()
             cmd.linear.x = dis * 0.35
-            cmd.angular.z = angle * 2
+            cmd.angular.z = angle * 0.6
             self.cmd_drive[i] = cmd
 
         #print(self.yaw)
         #print(v_des)
         #print(self.position)
-        print(self.goal)
+        #print(self.goal)
         #print(dis)
         #print(angle)
         #print(self.cmd_drive)
