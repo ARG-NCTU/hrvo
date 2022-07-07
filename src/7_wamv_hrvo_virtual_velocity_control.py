@@ -31,31 +31,32 @@ class BoatHRVO(object):
         # setup publisher
         self.pub_v1 = rospy.Publisher("/wamv/cmd_vel", Twist, queue_size=1)
         self.sub_p3d1 = rospy.Subscriber(
-            "/boat1/robot_pose", Odometry, self.cb_boat1_odom, queue_size=1)
+            "/wamv/localization_gps_imu/odometry", Odometry, self.cb_boat1_odom, queue_size=1)
+        
 
         self.pub_v2 = rospy.Publisher("/wamv1/cmd_vel", Twist, queue_size=1)
         self.sub_p3d2 = rospy.Subscriber(
-            "/boat2/robot_pose", Odometry, self.cb_boat2_odom, queue_size=1)
+            "/wamv1/localization_gps_imu/odometry", Odometry, self.cb_boat2_odom, queue_size=1)
 
         self.pub_v3 = rospy.Publisher("/wamv2/cmd_vel", Twist, queue_size=1)
         self.sub_p3d3 = rospy.Subscriber(
-            "/boat3/robot_pose", Odometry, self.cb_boat3_odom, queue_size=1)
+            "/wamv2/localization_gps_imu/odometry", Odometry, self.cb_boat3_odom, queue_size=1)
         
         self.pub_v4 = rospy.Publisher("/wamv3/cmd_vel", Twist, queue_size=1)
         self.sub_p3d4 = rospy.Subscriber(
-            "/boat4/robot_pose", Odometry, self.cb_boat4_odom, queue_size=1)
+            "/wamv3/localization_gps_imu/odometry", Odometry, self.cb_boat4_odom, queue_size=1)
         
         self.pub_v5 = rospy.Publisher("/wamv4/cmd_vel", Twist, queue_size=1)
         self.sub_p3d5 = rospy.Subscriber(
-            "/boat5/robot_pose", Odometry, self.cb_boat5_odom, queue_size=1)
+            "/wamv4/localization_gps_imu/odometry", Odometry, self.cb_boat5_odom, queue_size=1)
         
         self.pub_v6 = rospy.Publisher("/wamv5/cmd_vel", Twist, queue_size=1)
         self.sub_p3d6 = rospy.Subscriber(
-            "/boat6/robot_pose", Odometry, self.cb_boat6_odom, queue_size=1)
+            "/wamv5/localization_gps_imu/odometry", Odometry, self.cb_boat6_odom, queue_size=1)
         
         self.pub_v7 = rospy.Publisher("/wamv6/cmd_vel", Twist, queue_size=1)
         self.sub_p3d7 = rospy.Subscriber(
-            "/boat7/robot_pose", Odometry, self.cb_boat7_odom, queue_size=1)
+            "/wamv6/localization_gps_imu/odometry", Odometry, self.cb_boat7_odom, queue_size=1)
 
         self.sub_goal = rospy.Subscriber("/wamv/move_base_simple/goal", PoseStamped, self.cb_goal, queue_size=1)
         self.sub_goal1 = rospy.Subscriber("/wamv1/move_base_simple/goal", PoseStamped, self.cb_goal1, queue_size=1)
@@ -71,16 +72,18 @@ class BoatHRVO(object):
         self.boat_odom = [Odometry() for i in range(7)]
         self.cmd_drive = [Twist() for i in range(7)]
         self.yaw = [0 for i in range(7)]
+        self.vx = [0 for i in range(7)]
+        self.vy = [0 for i in range(7)]
         # initiallize HRVO environment
         self.ws_model = dict()
         # robot radius
-        self.ws_model['robot_radius'] = 1.5
+        self.ws_model['robot_radius'] = 2.5
         self.ws_model['circular_obstacles'] = []
         self.right_start = (6.5,-170)
         self.right_end = (9.3,-107)
         self.left_start = (5.7,-192)
         self.left_end = (5,-249)
-        self.radius = 2
+        self.radius = 3
         self.right_point = abs(self.right_start[1]-self.right_end[1])/self.radius
         self.right_x = abs(self.right_start[0]-self.right_end[0])/self.right_point 
         for point in range(self.right_point+1):
@@ -93,11 +96,14 @@ class BoatHRVO(object):
             #print(point)
             self.ws_model['circular_obstacles'].append((self.left_start[0]-(self.left_x*point),self.left_start[1]-(self.radius*point),self.radius))
 
-        print(self.ws_model['circular_obstacles'])
+        #print(self.ws_model['circular_obstacles'])
         #print(self.right_start[1])#-170
         #hole = [x, y, rad]
         # rectangular boundary, format [x,y,width/2,heigth/2]
+
+
         self.ws_model['boundary'] = []
+
 
         self.position = []
         self.goal = [[0, 0] for i in range(7)]
@@ -106,6 +112,17 @@ class BoatHRVO(object):
         self.velocity = [[0, 0] for i in range(7)]
         self.velocity_detect = [[0, 0] for i in range(7)]
         self.v_max = [1 for i in range(7)]
+        self.vx_error_inte = [0 for i in range(7)]
+        self.vy_error_inte = [0 for i in range(7)]
+        self.v_error_inte = [0 for i in range(7)]
+        self.vx_prior = [0 for i in range(7)]
+        self.vy_prior = [0 for i in range(7)]
+        self.v_prior = [0 for i in range(7)]
+        self.vx_error_diff = [0 for i in range(7)]
+        self.vy_error_diff = [0 for i in range(7)]
+        self.v_error_diff = [0 for i in range(7)]
+        self.angle_prior = [0 for i in range(7)]
+        self.angle_diff = [0 for i in range(7)]
 
         # timer
         self.timer = rospy.Timer(rospy.Duration(0.1), self.cb_hrvo)
@@ -122,17 +139,23 @@ class BoatHRVO(object):
 
         for i in range(7):
             dis, angle = self.process_ang_dis(
-                self.velocity[i][0], self.velocity[i][1], self.yaw[i])
+                i,self.velocity[i][0], self.velocity[i][1], self.vx[i],self.vy[i],self.yaw[i])
+            # dis, angle = self.process_ang_dis(
+            #     1, 1, self.vx[i],self.vy[i],self.yaw[i])
             ##p3d 0.35 0.8
             cmd = Twist()
-            cmd.linear.x = dis * 0.35
-            cmd.angular.z = angle * 0.6
+            cmd.linear.x = dis * 1.0
+            cmd.angular.z = angle * 1.0
             self.cmd_drive[i] = cmd
+            #print(cmd)
 
         #print(self.yaw)
         #print(v_des)
         #print(self.position)
-        #print(self.goal)
+        # print("vx")
+        # print(self.velocity[0][0])
+        # print("vy")
+        #print(self.cmd_drive[6])
         #print(dis)
         #print(angle)
         #print(self.cmd_drive)
@@ -160,10 +183,46 @@ class BoatHRVO(object):
                 min_dis = dis if dis < min_dis else min_dis
         return min_dis, done
 
-    def process_ang_dis(self, vx, vy, yaw):
+    def process_ang_dis(self,i, vx, vy,vx_now,vy_now, yaw):
+        #vx_error_angle = vx - vx_now
+        #vy_error_angle = vy - vy_now
+        v = math.sqrt(vx**2+vy**2)
+        v_now = math.sqrt(vx_now**2+vy_now**2)
+        vx_error = vx - vx_now
+        vy_error = vx - vx_now
+        v_error_int = v-v_now
+        #v_error = math.sqrt(vx_error**2+vy_error **2)
+        v_error = v-v_now
+        
+        self.vx_error_inte[i] = self.vx_error_inte[i] + vx_error
+        self.vy_error_inte[i] = self.vy_error_inte[i] + vy_error
+        self.v_error_inte[i] = self.v_error_inte[i] + v_error_int
+        self.vx_error_diff[i] = vx_now - self.vx_prior[i]
+        self.vy_error_diff[i] = vx_now - self.vy_prior[i]
+        self.v_error_diff[i] = v_error - self.v_prior[i]
+        self.vx_prior[i] = vx_now
+        self.vx_prior[i] = vy_now
+        self.v_prior[i] = v_error
+        print(v)
+        print(v_now)
+        print(vx)
+        print(vx_now)
+        print(i)
+        print(self.v_error_inte[i])
+
+
+        
         dest_yaw = math.atan2(vy, vx)
 
         angle = dest_yaw - yaw
+
+        self.angle_diff[i] = angle - self.angle_prior[i]
+        self.angle_prior[i] = angle
+        angle = 1.4 * angle + 1.4 * self.angle_diff[i]
+        # print(dest_yaw)
+        # print(yaw)
+        # print(angle)
+        print("===========")
 
         #print(angle)
         if angle > np.pi:
@@ -172,9 +231,19 @@ class BoatHRVO(object):
         if angle < -np.pi:
             angle = angle+2*np.pi
 
-        angle = angle/np.pi
+        # angle = angle/np.pi
+        # print(angle)
 
-        dis = math.sqrt(vx**2+vy**2)
+        #dis = math.sqrt((0.7*vx_error+0.01*self.vx_error_inte[i]-0.005*self.vx_error_diff[i])**2+(0.7*vy_error+0.01*self.vy_error_inte[i]-0.005*self.vy_error_diff[i])**2) 
+        dis = 1.1*v_error +0.03*self.v_error_inte[i]+ 0.0006*self.v_error_diff[i]
+
+        # if abs(angle)>0.5:
+        #     dis = -0.1
+        #     # if abs(angle)>1:
+        #     #     dis = -0.2
+        #     #     print("keepppppp")
+        #     self.v_error_inte[i] = 0
+        #     print("reset")
 
         # print "pos      %2.2f, %2.2f" % (self.position[0][0], self.position[0][1])
         # print "goal     %2.2f, %2.2f" % (self.goal[0][0], self.goal[0][1])
@@ -203,6 +272,8 @@ class BoatHRVO(object):
                           self.boat_odom[i].pose.pose.orientation.w)
             euler = tf.transformations.euler_from_quaternion(quaternion)
             self.yaw[i] = euler[2]
+            self.vx[i] = self.boat_odom[i].twist.twist.linear.x
+            self.vy[i] = self.boat_odom[i].twist.twist.linear.y
 
             # update velocity
             self.velocity_detect[i] = [self.boat_odom[i].twist.twist.linear.x,
