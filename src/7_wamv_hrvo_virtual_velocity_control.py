@@ -77,7 +77,7 @@ class BoatHRVO(object):
         # initiallize HRVO environment
         self.ws_model = dict()
         # robot radius
-        self.ws_model['robot_radius'] = 2.5
+        self.ws_model['robot_radius'] = 3.5
         self.ws_model['circular_obstacles'] = []
         self.right_start = (6.5,-170)
         self.right_end = (9.3,-107)
@@ -111,7 +111,7 @@ class BoatHRVO(object):
         # print(self.goal)
         self.velocity = [[0, 0] for i in range(7)]
         self.velocity_detect = [[0, 0] for i in range(7)]
-        self.v_max = [1 for i in range(7)]
+        self.v_max = [0.5 for i in range(7)]
         self.vx_error_inte = [0 for i in range(7)]
         self.vy_error_inte = [0 for i in range(7)]
         self.v_error_inte = [0 for i in range(7)]
@@ -197,16 +197,16 @@ class BoatHRVO(object):
         self.vx_error_inte[i] = self.vx_error_inte[i] + vx_error
         self.vy_error_inte[i] = self.vy_error_inte[i] + vy_error
         self.v_error_inte[i] = self.v_error_inte[i] + v_error_int
-        self.vx_error_diff[i] = vx_now - self.vx_prior[i]
-        self.vy_error_diff[i] = vx_now - self.vy_prior[i]
+        self.vx_error_diff[i] = vx_error - self.vx_prior[i]
+        self.vy_error_diff[i] = vy_error - self.vy_prior[i]
         self.v_error_diff[i] = v_error - self.v_prior[i]
-        self.vx_prior[i] = vx_now
-        self.vx_prior[i] = vy_now
+        self.vx_prior[i] = vx_error
+        self.vy_prior[i] = vy_error
         self.v_prior[i] = v_error
         print(v)
         print(v_now)
-        print(vx)
-        print(vx_now)
+        # print(vx)
+        # print(vx_now)
         print(i)
         print(self.v_error_inte[i])
 
@@ -218,10 +218,10 @@ class BoatHRVO(object):
 
         self.angle_diff[i] = angle - self.angle_prior[i]
         self.angle_prior[i] = angle
-        angle = 1.4 * angle + 1.4 * self.angle_diff[i]
+        angle = 1.2 * angle + 1 * self.angle_diff[i]
         # print(dest_yaw)
         # print(yaw)
-        # print(angle)
+        print(angle)
         print("===========")
 
         #print(angle)
@@ -235,10 +235,10 @@ class BoatHRVO(object):
         # print(angle)
 
         #dis = math.sqrt((0.7*vx_error+0.01*self.vx_error_inte[i]-0.005*self.vx_error_diff[i])**2+(0.7*vy_error+0.01*self.vy_error_inte[i]-0.005*self.vy_error_diff[i])**2) 
-        dis = 1.1*v_error +0.03*self.v_error_inte[i]+ 0.0006*self.v_error_diff[i]
+        dis = 0.8*v_error +0.006*self.v_error_inte[i]+ 0.0002*self.v_error_diff[i]
 
-        # if abs(angle)>0.5:
-        #     dis = -0.1
+        # if self.v_error_inte[i] < -15:
+        #     #dis = 0.0
         #     # if abs(angle)>1:
         #     #     dis = -0.2
         #     #     print("keepppppp")

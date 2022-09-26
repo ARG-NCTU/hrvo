@@ -21,33 +21,33 @@ class BoatHRVO(object):
         rospy.loginfo("[%s] Initializing" % self.node_name)
         self.frame = "odom"
         self.frame1 = "odom"
-        self.auto = 0
+        self.auto = 1
 
         self.reset_world = rospy.ServiceProxy('/gazebo/reset_world', Empty)
         self.reset_model = rospy.ServiceProxy(
             '/gazebo/set_model_state', SetModelState)
 
         # setup publisher
-        self.pub_v = rospy.Publisher("/wamv/cmd_vel", Twist, queue_size=1)
+        self.pub_v = rospy.Publisher("/wamv1/cmd_vel", Twist, queue_size=1)
         self.sub_p3d = rospy.Subscriber(
-            "/boat1/localization_gps_imu/odometry", Odometry, self.cb_boat_odom, queue_size=1)
-        self.sub_goal = rospy.Subscriber("/wamv/move_base_simple/goal", PoseStamped, self.cb_goal, queue_size=1)
+            "/wamv1/localization_gps_imu/odometry", Odometry, self.cb_boat_odom, queue_size=1)
+        self.sub_goal = rospy.Subscriber("/wamv1/move_base_simple/goal", PoseStamped, self.cb_goal, queue_size=1)
 
-        self.pub_v1 = rospy.Publisher("/wamv1/cmd_vel", Twist, queue_size=1)
+        self.pub_v1 = rospy.Publisher("/wamv2/cmd_vel", Twist, queue_size=1)
         self.sub_p3d1 = rospy.Subscriber(
-            "/boat2/localization_gps_imu_2/odometry", Odometry, self.cb_boat1_odom, queue_size=1)
-        self.sub_goal1 = rospy.Subscriber("/wamv1/move_base_simple/goal", PoseStamped, self.cb_goal1, queue_size=1)
+            "/wamv2/localization_gps_imu/odometry", Odometry, self.cb_boat1_odom, queue_size=1)
+        self.sub_goal1 = rospy.Subscriber("/wamv2/move_base_simple/goal", PoseStamped, self.cb_goal1, queue_size=1)
         
         
-        self.pub_v2 = rospy.Publisher("/wamv2/cmd_vel", Twist, queue_size=1)
+        self.pub_v2 = rospy.Publisher("/wamv3/cmd_vel", Twist, queue_size=1)
         self.sub_p3d2 = rospy.Subscriber(
-            "/boat3/localization_gps_imu/odometry", Odometry, self.cb_boat2_odom, queue_size=1)
-        self.sub_goal2 = rospy.Subscriber("/wamv2/move_base_simple/goal", PoseStamped, self.cb_goal2, queue_size=1)
+            "/wamv3/localization_gps_imu/odometry", Odometry, self.cb_boat2_odom, queue_size=1)
+        self.sub_goal2 = rospy.Subscriber("/wamv3/move_base_simple/goal", PoseStamped, self.cb_goal2, queue_size=1)
 
-        self.pub_v3 = rospy.Publisher("/wamv3/cmd_vel", Twist, queue_size=1)
+        self.pub_v3 = rospy.Publisher("/wamv4/cmd_vel", Twist, queue_size=1)
         self.sub_p3d3 = rospy.Subscriber(
-            "/boat4/localization_gps_imu/odometry", Odometry, self.cb_boat3_odom, queue_size=1)
-        self.sub_goal3 = rospy.Subscriber("/wamv3/move_base_simple/goal", PoseStamped, self.cb_goal3, queue_size=1)
+            "/wamv4/localization_gps_imu/odometry", Odometry, self.cb_boat3_odom, queue_size=1)
+        self.sub_goal3 = rospy.Subscriber("/wamv4/move_base_simple/goal", PoseStamped, self.cb_goal3, queue_size=1)
         
         self.sub_joy = rospy.Subscriber("/joy", Joy, self.cb_joy, queue_size=1)
         # initiallize boat status
@@ -57,7 +57,7 @@ class BoatHRVO(object):
         # initiallize HRVO environment
         self.ws_model = dict()
         # robot radius
-        self.ws_model['robot_radius'] = 3.6
+        self.ws_model['robot_radius'] = 2.5
         self.ws_model['circular_obstacles'] = []
         # rectangular boundary, format [x,y,width/2,heigth/2]
         self.ws_model['boundary'] = []
@@ -79,6 +79,7 @@ class BoatHRVO(object):
         if self.auto == 0:
             return
         self.update_all()
+        print(self.goal)
         v_des = compute_V_des(self.position, self.goal, self.v_max)
         self.velocity = RVO_update(
             self.position, v_des, self.velocity_detect, self.ws_model)
@@ -89,10 +90,10 @@ class BoatHRVO(object):
             ##p3d 0.35 0.8
             cmd = Twist()
             cmd.linear.x = dis * 0.35
-            cmd.angular.z = angle * 0.95
+            cmd.angular.z = angle * 0.6
             if i ==3:
-                cmd.linear.x = dis * 0.525
-                cmd.angular.z = angle * 1.425
+                cmd.linear.x = dis * 0.35
+                cmd.angular.z = angle * 0.6
             self.cmd_drive[i] = cmd
 
         self.pub_v.publish(self.cmd_drive[0])
