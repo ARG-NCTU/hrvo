@@ -30,23 +30,23 @@ class BoatHRVO(object):
         # setup publisher
         self.pub_v = rospy.Publisher("/wamv1/cmd_vel", Twist, queue_size=1)
         self.sub_p3d = rospy.Subscriber(
-            "/wamv1/localization_gps_imu/odometry", Odometry, self.cb_boat_odom, queue_size=1)
+            "/boat1/pose", Odometry, self.cb_boat_odom, queue_size=1)
         self.sub_goal = rospy.Subscriber("/wamv1/move_base_simple/goal", PoseStamped, self.cb_goal, queue_size=1)
 
         self.pub_v1 = rospy.Publisher("/wamv2/cmd_vel", Twist, queue_size=1)
         self.sub_p3d1 = rospy.Subscriber(
-            "/wamv2/localization_gps_imu/odometry", Odometry, self.cb_boat1_odom, queue_size=1)
+            "/boat2/pose", Odometry, self.cb_boat1_odom, queue_size=1)
         self.sub_goal1 = rospy.Subscriber("/wamv2/move_base_simple/goal", PoseStamped, self.cb_goal1, queue_size=1)
         
         
         self.pub_v2 = rospy.Publisher("/wamv3/cmd_vel", Twist, queue_size=1)
         self.sub_p3d2 = rospy.Subscriber(
-            "/wamv3/localization_gps_imu/odometry", Odometry, self.cb_boat2_odom, queue_size=1)
+            "/boat3/pose", Odometry, self.cb_boat2_odom, queue_size=1)
         self.sub_goal2 = rospy.Subscriber("/wamv3/move_base_simple/goal", PoseStamped, self.cb_goal2, queue_size=1)
 
         self.pub_v3 = rospy.Publisher("/wamv4/cmd_vel", Twist, queue_size=1)
         self.sub_p3d3 = rospy.Subscriber(
-            "/wamv4/localization_gps_imu/odometry", Odometry, self.cb_boat3_odom, queue_size=1)
+            "/boat4/pose", Odometry, self.cb_boat3_odom, queue_size=1)
         self.sub_goal3 = rospy.Subscriber("/wamv4/move_base_simple/goal", PoseStamped, self.cb_goal3, queue_size=1)
         
         self.sub_joy = rospy.Subscriber("/joy", Joy, self.cb_joy, queue_size=1)
@@ -57,7 +57,7 @@ class BoatHRVO(object):
         # initiallize HRVO environment
         self.ws_model = dict()
         # robot radius
-        self.ws_model['robot_radius'] = 2.5
+        self.ws_model['robot_radius'] = 3.5
         self.ws_model['circular_obstacles'] = []
         # rectangular boundary, format [x,y,width/2,heigth/2]
         self.ws_model['boundary'] = []
@@ -71,7 +71,7 @@ class BoatHRVO(object):
         self.v_max = [1 for i in range(4)]
 
         # timer
-        self.timer = rospy.Timer(rospy.Duration(0.1), self.cb_hrvo)
+        self.timer = rospy.Timer(rospy.Duration(1.2), self.cb_hrvo)
 
     def cb_hrvo(self, event):
         if self.goal[0] == [0,0] and self.goal[1]==[0,0]:
@@ -89,11 +89,11 @@ class BoatHRVO(object):
                 self.velocity[i][0], self.velocity[i][1], self.yaw[i])
             ##p3d 0.35 0.8
             cmd = Twist()
-            cmd.linear.x = dis * 0.35
-            cmd.angular.z = angle * 0.6
+            cmd.linear.x = dis * 0.2
+            cmd.angular.z = angle * 0.4
             if i ==3:
-                cmd.linear.x = dis * 0.35
-                cmd.angular.z = angle * 0.6
+                cmd.linear.x = dis * 0.2
+                cmd.angular.z = angle * 0.4
             self.cmd_drive[i] = cmd
 
         self.pub_v.publish(self.cmd_drive[0])
