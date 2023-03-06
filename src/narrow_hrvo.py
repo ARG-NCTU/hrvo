@@ -29,29 +29,29 @@ class BoatHRVO(object):
             '/gazebo/set_model_state', SetModelState)
 
         # setup publisher
-        self.pub_v = rospy.Publisher("/wamv1/cmd_vel", Twist, queue_size=1)
+        self.pub_v = rospy.Publisher("/wamv1/cmd_vel_hrvo", Twist, queue_size=1)
         self.sub_p3d = rospy.Subscriber(
             "/wamv1/localization_gps_imu/odometry", Odometry, self.cb_boat_odom, queue_size=1)
         self.sub_goal = rospy.Subscriber("/wamv1/move_base_simple/goal", PoseStamped, self.cb_goal, queue_size=1)
 
-        self.pub_v1 = rospy.Publisher("/wamv2/cmd_vel", Twist, queue_size=1)
+        self.pub_v1 = rospy.Publisher("/wamv2/cmd_vel_hrvo", Twist, queue_size=1)
         self.sub_p3d1 = rospy.Subscriber(
             "/wamv2/localization_gps_imu/odometry", Odometry, self.cb_boat1_odom, queue_size=1)
         self.sub_goal1 = rospy.Subscriber("/wamv2/move_base_simple/goal", PoseStamped, self.cb_goal1, queue_size=1)
         
         
-        self.pub_v2 = rospy.Publisher("/wamv3/cmd_vel", Twist, queue_size=1)
+        self.pub_v2 = rospy.Publisher("/wamv3/cmd_vel_hrvo", Twist, queue_size=1)
         self.sub_p3d2 = rospy.Subscriber(
             "/wamv3/localization_gps_imu/odometry", Odometry, self.cb_boat2_odom, queue_size=1)
         self.sub_goal2 = rospy.Subscriber("/wamv3/move_base_simple/goal", PoseStamped, self.cb_goal2, queue_size=1)
 
-        self.pub_v3 = rospy.Publisher("/wamv4/cmd_vel", Twist, queue_size=1)
+        self.pub_v3 = rospy.Publisher("/wamv4/cmd_vel_hrvo", Twist, queue_size=1)
         self.sub_p3d3 = rospy.Subscriber(
             "/wamv4/localization_gps_imu/odometry", Odometry, self.cb_boat3_odom, queue_size=1)
         self.sub_goal3 = rospy.Subscriber("/wamv4/move_base_simple/goal", PoseStamped, self.cb_goal3, queue_size=1)
 
 
-        self.pub_v4 = rospy.Publisher("/wamv5/cmd_vel", Twist, queue_size=1)
+        self.pub_v4 = rospy.Publisher("/wamv5/cmd_vel_hrvo", Twist, queue_size=1)
         self.sub_p3d4 = rospy.Subscriber(
             "/wamv5/localization_gps_imu/odometry", Odometry, self.cb_boat4_odom, queue_size=1)
         self.sub_goal4 = rospy.Subscriber("/wamv5/move_base_simple/goal", PoseStamped, self.cb_goal4, queue_size=1)
@@ -67,9 +67,9 @@ class BoatHRVO(object):
         self.ws_model['robot_radius'] = 3
         self.ws_model['circular_obstacles'] = []
         #obstacle\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-        self.right_start = (-57,-160)
+        self.right_start = (-57,-170)
         self.right_end = (-57,-125)
-        self.left_start = (-57,-195)
+        self.left_start = (-57,-205)
         self.left_end = (-57,-230)
         self.radius = 5
         self.right_point = abs(self.right_start[1]-self.right_end[1])/self.radius
@@ -85,17 +85,30 @@ class BoatHRVO(object):
             self.ws_model['circular_obstacles'].append((self.left_start[0]-(self.left_x*point),self.left_start[1]-(self.radius*point),self.radius))
 
         
-        self.ws_model['circular_obstacles'].append((-55,-192,2))
-        self.ws_model['circular_obstacles'].append((-59,-192,2))
-        self.ws_model['circular_obstacles'].append((-55,-190,2))
-        self.ws_model['circular_obstacles'].append((-59,-190,2))
-        self.ws_model['circular_obstacles'].append((-61,-188,2))
-        self.ws_model['circular_obstacles'].append((-55,-162,2))
-        self.ws_model['circular_obstacles'].append((-59,-162,2))
-        self.ws_model['circular_obstacles'].append((-55,-165,3))
-        self.ws_model['circular_obstacles'].append((-59,-165,3))
-        self.ws_model['circular_obstacles'].append((-55,-168,3))
-        self.ws_model['circular_obstacles'].append((-59,-168,2))
+        self.ws_model['circular_obstacles'].append((-55,-202,2))
+        self.ws_model['circular_obstacles'].append((-59,-202,2))
+        self.ws_model['circular_obstacles'].append((-55,-200,2))
+        self.ws_model['circular_obstacles'].append((-59,-200,2))
+        self.ws_model['circular_obstacles'].append((-55,-198,2))
+        self.ws_model['circular_obstacles'].append((-59,-198,2))
+        self.ws_model['circular_obstacles'].append((-55,-196,2))
+        self.ws_model['circular_obstacles'].append((-59,-196,2))
+        #////////////////
+        self.ws_model['circular_obstacles'].append((-61,-198,2))
+        self.ws_model['circular_obstacles'].append((-59,-196,2))
+
+        self.ws_model['circular_obstacles'].append((-61,-196,2))
+        self.ws_model['circular_obstacles'].append((-63,-195,2))
+
+        #/////////////////////////
+        self.ws_model['circular_obstacles'].append((-55,-172,2))
+        self.ws_model['circular_obstacles'].append((-59,-172,2))
+        self.ws_model['circular_obstacles'].append((-55,-175,3))
+        self.ws_model['circular_obstacles'].append((-59,-175,3))
+        self.ws_model['circular_obstacles'].append((-55,-178,3))
+        self.ws_model['circular_obstacles'].append((-59,-178,2))
+
+        ###########################################################################
         # self.ws_model['circular_obstacles'].append((-55,-166,2))
         # self.ws_model['circular_obstacles'].append((-59,-166,2))
         # self.ws_model['circular_obstacles'].append((-62,-166,1))
