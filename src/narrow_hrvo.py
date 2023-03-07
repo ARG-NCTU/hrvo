@@ -22,7 +22,7 @@ class BoatHRVO(object):
         self.frame = "map"
         self.frame1 = "map"
         self.auto = 0
-        self.num = 5
+        self.num = 3
 
         self.reset_world = rospy.ServiceProxy('/gazebo/reset_world', Empty)
         self.reset_model = rospy.ServiceProxy(
@@ -156,8 +156,8 @@ class BoatHRVO(object):
         self.pub_v.publish(self.cmd_drive[0])
         self.pub_v1.publish(self.cmd_drive[1])
         self.pub_v2.publish(self.cmd_drive[2])
-        self.pub_v3.publish(self.cmd_drive[3])
-        self.pub_v4.publish(self.cmd_drive[4])
+        #self.pub_v3.publish(self.cmd_drive[3])
+        #self.pub_v4.publish(self.cmd_drive[4])
 
     def check_state(self):
         min_dis = 1e9
